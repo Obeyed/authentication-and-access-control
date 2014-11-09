@@ -120,7 +120,7 @@ public class Client {
         else {
             System.out.println("Verifying sign in..");
 //            publicKeyHandshake = false;
-         //   Thread.sleep(5000);
+            Thread.sleep(5000);
             System.out.println("ACCESS DENIED");
             return false;
         }
@@ -248,7 +248,7 @@ public class Client {
                 System.out.println("Unknown command..");
                 break;
         }
-      //  Thread.sleep(1000);
+        Thread.sleep(1000);
         return false;
     }
 
