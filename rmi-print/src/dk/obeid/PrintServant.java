@@ -481,7 +481,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
             Properties properties = System.getProperties();
             String home = properties.get("user.home").toString();
             String separator = properties.get("file.separator").toString();
-            String dirName = "authentication_lab" + separator + "s291452" + separator + "shared_key" + separator;
+            String dirName = "authentication_lab" + separator + "s142952" + separator + "shared_key" + separator;
             String path = home + separator + dirName;
 
             File dir = new File(path);
