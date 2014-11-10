@@ -83,6 +83,7 @@ public class Client {
      */
     private static boolean giveAccessInfo(Scanner input, String user, String password) throws Exception {
 //        if (session != null && service.verifySession(encryptData(session.toString(), sharedKey))) {
+        if (session != null) System.out.println("Verifying session..");
         if (session != null && service.verifySession(session)) {
             System.out.println("Verified");
             return true;
@@ -112,7 +113,7 @@ public class Client {
 
 //            decryptedSession = (Date) dateFormat.parse(decrypt(service.getSession(), sharedKey));
             session = service.getSession();
-            System.out.println("new session: " + session.toString());
+//            System.out.println("new session: " + session.toString());
 
             System.out.println("Welcome to print service!");
 //            publicKeyHandshake = true;
