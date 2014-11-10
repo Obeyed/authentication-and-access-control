@@ -1,12 +1,12 @@
 package dk.obeid;
 
 import javax.crypto.Cipher;
-import javax.crypto.KeyGenerator;
-import javax.crypto.SecretKey;
+//import javax.crypto.KeyGenerator;
+//import javax.crypto.SecretKey;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
+//import java.security.NoSuchAlgorithmException;
+//import java.security.NoSuchProviderException;
 import java.security.SecureRandom;
 import java.util.Random;
 
@@ -14,7 +14,8 @@ import static dk.obeid.User.AES.encryptPassword;
 
 public class User {
     private String username = null;
-    private byte[] encryptedPassword = null,  salt = new byte[16];
+    private byte[] encryptedPassword = null,
+            salt = new byte[16];
 
     /**
      *
@@ -33,7 +34,7 @@ public class User {
      * @return salt
      */
     private byte[] initialisationVector(){
-        final Random r = new SecureRandom();
+        Random r = new SecureRandom();
         byte[] ivBytes = new byte[16];
         r.nextBytes(ivBytes);
         return ivBytes;
@@ -94,21 +95,21 @@ public class User {
             return encryptedPassword;
         }
 
-        /**
-         *
-         * @param data
-         * @param secretKey
-         * @return data encrypted
-         */
-        protected static byte[] encryptData(String data, SecretKey secretKey){
-            byte[] encrypted = null;
-            try {
-                encrypted = encrypt(data, secretKey);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return encrypted;
-        }
+//        /**
+//         *
+//         * @param data
+//         * @param secretKey
+//         * @return data encrypted
+//         */
+//        protected static byte[] encryptData(String data, SecretKey secretKey){
+//            byte[] encrypted = null;
+//            try {
+//                encrypted = encrypt(data, secretKey);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            return encrypted;
+//        }
 
         /**
          *
@@ -119,49 +120,52 @@ public class User {
          * @throws Exception
          */
         protected static byte[] encrypt(String plain, String key, byte[] salt) throws Exception {
-            Cipher cipher = Cipher.getInstance("AES/CBC/NoPadding", "SunJCE");
+            System.out.println("Application started:");
+            System.out.println("Setting up users and encrypting passwords..");
+
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
             cipher.init(Cipher.ENCRYPT_MODE,
                     new SecretKeySpec(key.getBytes("UTF-8"), "AES"),
                     new IvParameterSpec(salt));
             return cipher.doFinal(plain.getBytes("UTF-8"));
         }
-
-        /**
-         *
-         * @param plain
-         * @param key
-         * @return data encrypted with key
-         * @throws Exception
-         */
-        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(plain.getBytes("UTF-8"));
-        }
-
-        /**
-         *
-         * @param cipherText
-         * @param key
-         * @return decrypted bytes of cipher text
-         * @throws Exception
-         */
-        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(cipherText),"UTF-8");
-        }
-
-        /**
-         *
-         * @return freshly generated secret key
-         * @throws java.security.NoSuchAlgorithmException
-         */
-        protected static SecretKey genSecretKey() throws NoSuchAlgorithmException, NoSuchProviderException {
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "SunJCE");
-            keyGen.init(AES_Key_Size);
-            return keyGen.generateKey();
-        }
+//
+//        /**
+//         *
+//         * @param plain
+//         * @param key
+//         * @return data encrypted with key
+//         * @throws Exception
+//         */
+//        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.ENCRYPT_MODE, key);
+//            return cipher.doFinal(plain.getBytes("UTF-8"));
+//        }
+//
+//        /**
+//         *
+//         * @param cipherText
+//         * @param key
+//         * @return decrypted bytes of cipher text
+//         * @throws Exception
+//         */
+//        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.DECRYPT_MODE, key);
+//            return new String(cipher.doFinal(cipherText),"UTF-8");
+//        }
+//
+//        /**
+//         *
+//         * @return freshly generated secret key
+//         * @throws java.security.NoSuchAlgorithmException
+//         */
+//        protected static SecretKey genSecretKey() throws NoSuchAlgorithmException, NoSuchProviderException {
+//            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "SunJCE");
+//            keyGen.init(AES_Key_Size);
+//            return keyGen.generateKey();
+//        }
     }
 
 

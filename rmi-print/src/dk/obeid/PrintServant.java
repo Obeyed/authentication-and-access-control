@@ -1,13 +1,13 @@
 package dk.obeid;
 
-import dk.obeid.unused.TrustedThirdParty;
+//import dk.obeid.unused.TrustedThirdParty;
 
 import javax.crypto.*;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
+//import java.io.File;
+//import java.io.FileInputStream;
+//import java.io.FileOutputStream;
 import java.io.IOException;
 //import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
@@ -15,7 +15,7 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
-import java.sql.Date;
+//import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -26,7 +26,7 @@ import static dk.obeid.PrintServant.AES.*;
 //import static dk.obeid.PrintServant.RSA.rsaEncryptPub;
 
 public class PrintServant extends UnicastRemoteObject implements PrintService {
-    private static SecretKey sharedKey; // we assume that the shared key was distributed by an asymmetric handshake
+//    private static SecretKey sharedKey; // we assume that the shared key was distributed by an asymmetric handshake
     private String choiceStr;
     private String arg1Str;
     private String arg2Str;
@@ -44,7 +44,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      */
     protected PrintServant() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
         super();
-        generateWriteSecretKey();
+//        generateWriteSecretKey();
 //        ttp.generateKeys("servant");
 //        for(User u : getUsers())
 //            ttp.generateKeys(u.getUsername());
@@ -52,20 +52,22 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
 //        privateKey = ttp.getPrivateKey("servant");
     }
 
-    @Override
-    public SecretKey getSharedKey() throws IOException {
-        return readSecretKey();
-    }
+//    @Override
+//    public SecretKey getSharedKey() throws IOException {
+//        return readSecretKey();
+//    }
 
     @Override
     /**
      *
      * @return fresh timestamp for session
      */
-    public byte[] getSession() throws IOException {
-        String t = new Timestamp(System.currentTimeMillis()).toString();
-        System.out.println("new session from server: " + t);
-        return encryptData(t, readSecretKey());
+ //   public byte[] getSession() throws IOException {
+    public Timestamp getSession() throws IOException {
+        //String t = new Timestamp(System.currentTimeMillis()).toString();
+        //System.out.println("new session from server: " + t);
+        // return encryptData(t, readSecretKey());
+        return new Timestamp(System.currentTimeMillis());
     }
 
     /**
@@ -191,16 +193,17 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * @param password
      * @return whether or not sign on was successful
      */
-    public boolean signon(byte[] username, byte[] password) throws Exception {
-        sharedKey = readSecretKey();
-        String decryptedUser = decrypt(username, sharedKey);
-        String decryptedPassword = decrypt(password, sharedKey);
+    // public boolean signon(byte[] username, byte[] password) throws Exception {
+    public boolean signon(String username, String password) throws Exception {
+//        sharedKey = readSecretKey();
+//        String decryptedUser = decrypt(username, sharedKey);
+//        String decryptedPassword = decrypt(password, sharedKey);
 
         List<User> users = getUsers();
         User user = null;
-        for (User u : users) if (u.getUsername().equalsIgnoreCase(decryptedUser)) user = u;
+        for (User u : users) if (u.getUsername().equalsIgnoreCase(username)) user = u;
 
-        return user != null && verify(decryptedPassword, user.getSalt(), user.getEncryptedPassword());
+        return user != null && verify(password, user.getSalt(), user.getEncryptedPassword());
     }
 
     /**
@@ -223,16 +226,17 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * @param session
      * @return whether or not session is still valid
      */
-    public boolean verifySession(byte[] session) throws Exception {
-        Date decryptedSession = (Date) dateFormat.parse(decrypt(session, readSecretKey()));
-        Timestamp actualSession = new Timestamp(decryptedSession.getTime());
+//    public boolean verifySession(byte[] session) throws Exception {
+    public boolean verifySession(Timestamp session) throws Exception {
+//        Date decryptedSession = (Date) dateFormat.parse(decrypt(session, readSecretKey()));
+//        Timestamp actualSession = new Timestamp(decryptedSession.getTime());
 
         if (session != null){
             Calendar cal = Calendar.getInstance();
-            cal.setTimeInMillis(actualSession.getTime());
-            cal.add(Calendar.SECOND, 10); // 10 seconds for testing
+//            cal.setTimeInMillis(actualSession.getTime());
+            cal.setTimeInMillis(session.getTime());
+            cal.add(Calendar.SECOND, 10); // has access for 10 seconds
             Timestamp userSession = new Timestamp(cal.getTime().getTime());
-
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
 
             System.out.println("Verifying session..");
@@ -242,22 +246,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     @Override
-    public byte[] incoming(byte[] choiceByte) throws Exception {
-        return incoming(choiceByte, null, null);
-    }
-
-    @Override
-    public byte[] incoming(byte[] choiceByte, byte[] arg1) throws Exception {
-        return incoming(choiceByte, arg1, null);
-    }
-
-    @Override
-    public byte[] incoming(byte[] choiceByte, byte[] arg1, byte[] arg2) throws Exception {
-        sharedKey = readSecretKey();
+//    public byte[] incoming(byte[] choiceByte, byte[] arg1, byte[] arg2) throws Exception {
+    public String incoming(String choiceByte, String arg1, String arg2) throws Exception {
+//        sharedKey = readSecretKey();
         //decrypt data
-        if (choiceByte != null) choiceStr = decrypt(choiceByte, sharedKey);
-        if (arg1 != null) arg1Str = decrypt(arg1, sharedKey);
-        if (arg2 != null) arg2Str = decrypt(arg2, sharedKey);
+        if (choiceByte != null) choiceStr = choiceByte; //decrypt(choiceByte, sharedKey);
+        if (arg1 != null) arg1Str = arg1; //decrypt(arg1, sharedKey);
+        if (arg2 != null) arg2Str = arg2; //decrypt(arg2, sharedKey);
 
         int choiceInt = Integer.parseInt(choiceStr);
         switch (choiceInt) {
@@ -304,16 +299,17 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 break;
         }
         //encrypt response
-        return encryptData(response, sharedKey);
+        return response; //encryptData(response, sharedKey);
     }
 
-    @Override
+    /*
+     * AVAILABLE SERVICES
+     */
     // prints file filename on the specified printer
     public String print(String filename, String printer) throws RemoteException {
         return "Printing " + filename + " on printer " + printer;
     }
 
-    @Override
     // lists the print printQueue on the user's display in lines of the form <job number>   <file name>
     public List<String> queue() throws RemoteException {
         List<String> printList = new ArrayList<String>();
@@ -324,7 +320,6 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         return printList;
     }
 
-    @Override
     // moves job to the top of the printQueue
     public String topQueue(int job) throws RemoteException {
         QueuePair qp = null;
@@ -343,19 +338,16 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         }
     }
 
-    @Override
     // starts the print server
     public String start() throws RemoteException {
         return "Print server booted";
     }
 
-    @Override
     // stops the print server
     public String stop() throws RemoteException {
         return "Print server stopped";
     }
 
-    @Override
     // stops the print server, clears the print printQueue and starts the print server again
     public String restart() throws RemoteException {
         System.out.println(stop());
@@ -364,19 +356,16 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         return "Printer rebooted and print queue is empty.";
     }
 
-    @Override
     // prints status of printer on the user's display
     public String status() throws RemoteException {
         return "Status unknown";
     }
 
-    @Override
     // prints the value of the parameter on the user's display
     public String readConfig(String parameter) throws RemoteException {
         return "Configuration: " + parameter;
     }
 
-    @Override
     // sets the parameter to value
     public String setConfig(String parameter, String value) throws RemoteException {
         return String.format("Written configuration: %s", parameter = value); // whaa?
@@ -393,10 +382,10 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
          * equals 128 or 256 bits key size. depends on the word size of the OS.
          */
         private static final String key = "aL30f-39g(24OfD?";
-        /**
-         * AES key size
-         */
-        private static final int AES_Key_Size = 256;
+//        /**
+//         * AES key size
+//         */
+//        private static final int AES_Key_Size = 256;
 
         /**
          *
@@ -414,21 +403,21 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
             return encryptedPassword;
         }
 
-        /**
-         *
-         * @param data
-         * @param secretKey
-         * @return data encrypted
-         */
-        protected static byte[] encryptData(String data, SecretKey secretKey){
-            byte[] encrypted = null;
-            try {
-                encrypted = encrypt(data, secretKey);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return encrypted;
-        }
+//        /**
+//         *
+//         * @param data
+//         * @param secretKey
+//         * @return data encrypted
+//         */
+//        protected static byte[] encryptData(String data, SecretKey secretKey){
+//            byte[] encrypted = null;
+//            try {
+//                encrypted = encrypt(data, secretKey);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            return encrypted;
+//        }
 
         /**
          *
@@ -439,107 +428,108 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
          * @throws Exception
          */
         protected static byte[] encrypt(String plain, String key, byte[] salt) throws Exception {
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+            System.out.println("Server: encrypting password..");
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
             cipher.init(Cipher.ENCRYPT_MODE,
                     new SecretKeySpec(key.getBytes("UTF-8"), "AES"),
                     new IvParameterSpec(salt));
             return cipher.doFinal(plain.getBytes("UTF-8"));
         }
 
-        /**
-         *
-         * @param plain
-         * @param key
-         * @return data encrypted with key
-         * @throws Exception
-         */
-        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(plain.getBytes("UTF-8"));
-        }
+//        /**
+//         *
+//         * @param plain
+//         * @param key
+//         * @return data encrypted with key
+//         * @throws Exception
+//         */
+//        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.ENCRYPT_MODE, key);
+//            return cipher.doFinal(plain.getBytes("UTF-8"));
+//        }
 
-        /**
-         *
-         * @param cipherText
-         * @param key
-         * @return decrypted bytes of cipher text
-         * @throws Exception
-         */
-        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(cipherText),"UTF-8");
-        }
-
-        /**
-         *
-         * @return freshly generated secret key
-         * @throws java.security.NoSuchAlgorithmException
-         */
-        protected static void generateWriteSecretKey() throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
-            Properties properties = System.getProperties();
-            String home = properties.get("user.home").toString();
-            String separator = properties.get("file.separator").toString();
-            String dirName = "authentication_lab" + separator + "s142952" + separator + "shared_key" + separator;
-            String path = home + separator + dirName;
-
-            File dir = new File(path);
-            dir.mkdirs(); // create a new directory, will do nothing if directory exists
-
-            File file = new File(path + "shared.key");
-            if (!file.exists()) file.createNewFile(); // if file doesnt exists, then create it
-
-            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "SunJCE");
-            keyGen.init(AES_Key_Size);
-            SecretKey aesKey = keyGen.generateKey();
-
-            byte[] encoded = aesKey.getEncoded();
-            /* Now store "encoded" somewhere. For example, display the key and
-               ask the user to write it down. */
-            FileOutputStream fos = new FileOutputStream(file);
-
-            System.out.println(getHexString(encoded));
-
-            fos.write(getHexString(encoded).getBytes());
-            fos.flush();
-            fos.close();
-            System.out.println("Shared key stored..");
-
-        }
-
-        public static SecretKey readSecretKey() throws IOException {
-            Properties properties = System.getProperties();
-            String home = properties.get("user.home").toString();
-            String separator = properties.get("file.separator").toString();
-            String dirName = "authentication_lab" + separator + "s291452" + separator + "shared_key" + separator;
-            String path = home + separator + dirName;
-
-            File file = new File(path + "shared.key");
-            FileInputStream fis = new FileInputStream(file);
-            byte[] encodedSharedKey = new byte[(int) file.length()];
-            fis.read(encodedSharedKey);
-            fis.close();
-            byte[] encoded = new BigInteger(new String(encodedSharedKey, "UTF-8"), 16).toByteArray();
-
-            System.out.println("Returning shared key..");
-
-            return new SecretKeySpec(encoded, "AES");
-        }
-
-
-        /**
-         *
-         * @param b
-         * @return
-         */
-        private static String getHexString(byte[] b) {
-            String result = "";
-            for (int i = 0; i < b.length; i++) {
-                result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
-            }
-            return result;
-        }
+//        /**
+//         *
+//         * @param cipherText
+//         * @param key
+//         * @return decrypted bytes of cipher text
+//         * @throws Exception
+//         */
+//        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.DECRYPT_MODE, key);
+//            return new String(cipher.doFinal(cipherText),"UTF-8");
+//        }
+//
+//        /**
+//         *
+//         * @return freshly generated secret key
+//         * @throws java.security.NoSuchAlgorithmException
+//         */
+//        protected static void generateWriteSecretKey() throws NoSuchAlgorithmException, NoSuchProviderException, IOException {
+//            Properties properties = System.getProperties();
+//            String home = properties.get("user.home").toString();
+//            String separator = properties.get("file.separator").toString();
+//            String dirName = "authentication_lab" + separator + "s142952" + separator + "shared_key" + separator;
+//            String path = home + separator + dirName;
+//
+//            File dir = new File(path);
+//            dir.mkdirs(); // create a new directory, will do nothing if directory exists
+//
+//            File file = new File(path + "shared.key");
+//            if (!file.exists()) file.createNewFile(); // if file doesnt exists, then create it
+//
+//            KeyGenerator keyGen = KeyGenerator.getInstance("AES", "SunJCE");
+//            keyGen.init(AES_Key_Size);
+//            SecretKey aesKey = keyGen.generateKey();
+//
+//            byte[] encoded = aesKey.getEncoded();
+//            /* Now store "encoded" somewhere. For example, display the key and
+//               ask the user to write it down. */
+//            FileOutputStream fos = new FileOutputStream(file);
+//
+//            System.out.println(getHexString(encoded));
+//
+//            fos.write(getHexString(encoded).getBytes());
+//            fos.flush();
+//            fos.close();
+//            System.out.println("Shared key stored..");
+//
+//        }
+//
+//        public static SecretKey readSecretKey() throws IOException {
+//            Properties properties = System.getProperties();
+//            String home = properties.get("user.home").toString();
+//            String separator = properties.get("file.separator").toString();
+//            String dirName = "authentication_lab" + separator + "s291452" + separator + "shared_key" + separator;
+//            String path = home + separator + dirName;
+//
+//            File file = new File(path + "shared.key");
+//            FileInputStream fis = new FileInputStream(file);
+//            byte[] encodedSharedKey = new byte[(int) file.length()];
+//            fis.read(encodedSharedKey);
+//            fis.close();
+//            byte[] encoded = new BigInteger(new String(encodedSharedKey, "UTF-8"), 16).toByteArray();
+//
+//            System.out.println("Returning shared key..");
+//
+//            return new SecretKeySpec(encoded, "AES");
+//        }
+//
+//
+//        /**
+//         *
+//         * @param b
+//         * @return
+//         */
+//        private static String getHexString(byte[] b) {
+//            String result = "";
+//            for (int i = 0; i < b.length; i++) {
+//                result += Integer.toString((b[i] & 0xff) + 0x100, 16).substring(1);
+//            }
+//            return result;
+//        }
 
     }
 

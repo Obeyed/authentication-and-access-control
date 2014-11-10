@@ -2,7 +2,7 @@ package dk.obeid;
 
 import dk.obeid.unused.TrustedThirdParty;
 
-import javax.crypto.*;
+//import javax.crypto.*;
 //import java.io.UnsupportedEncodingException;
 import java.rmi.Naming;
 import java.sql.Date;
@@ -10,8 +10,8 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.Scanner;
 
-import static dk.obeid.Client.AES.decrypt;
-import static dk.obeid.Client.AES.encryptData;
+//import static dk.obeid.Client.AES.decrypt;
+//import static dk.obeid.Client.AES.encryptData;
 //import static dk.obeid.Client.RSA.rsaDecrypt;
 //import static dk.obeid.Client.RSA.rsaEncryptPriv;
 
@@ -19,12 +19,12 @@ public class Client {
     private static PrintService service;
     private static Timestamp session;
 //    private static PrivateKey privateKey;
-    private static SecretKey sharedKey;
+//    private static SecretKey sharedKey;
 //    private static String initialServerResponse;
 //    private static String initialNonceResponse;
 //    private static boolean publicKeyHandshake = false;
     private static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss.SSS");
-    private static Date decryptedSession;
+//    private static Date decryptedSession;
     private static final TrustedThirdParty ttp = new TrustedThirdParty();
 
     public static void main(String[] args) throws Exception {
@@ -38,19 +38,18 @@ public class Client {
         Scanner input = new Scanner(System.in);
         boolean authenticated = false,
                 terminate = false;
-        String user = null,
-                password = null;
+        String user = null, password = null;
         service = (PrintService) Naming.lookup("rmi://localhost:8090/print");
 
         /**
          * We assume that this key has had been received offline,
          * but for this purpose we generate a new key pair
          */
-        sharedKey = service.getSharedKey();
-        for (byte b : sharedKey.getEncoded())
-            System.out.print(b);
+//        sharedKey = service.getSharedKey();
+//        for (byte b : sharedKey.getEncoded())
+//            System.out.print(b);
 
-        System.out.println();
+//        System.out.println();
 
 //        System.out.println("Requested Key Pair..");
 //        privateKey = ttp.getPrivateKey("obeid");
@@ -59,11 +58,11 @@ public class Client {
 //        System.out.println();
 
         while (!terminate){
-            System.out.println("In ourtermost loop..");
+//            System.out.println("In ourtermost loop..");
             authenticated = false;
 //            while (!authenticated && !publicKeyHandshake) {
             while (!authenticated) {
-                System.out.println("In innermost loop..");
+//                System.out.println("In innermost loop..");
                 authenticated = giveAccessInfo(input, user, password);
 //                if (!publicKeyHandshake) {
 //                    System.out.println("Asymmetric handshake unsuccesful..\nGoodbye.");
@@ -83,7 +82,8 @@ public class Client {
      * @throws InterruptedException
      */
     private static boolean giveAccessInfo(Scanner input, String user, String password) throws Exception {
-        if (session != null && service.verifySession(encryptData(session.toString(), sharedKey))) {
+//        if (session != null && service.verifySession(encryptData(session.toString(), sharedKey))) {
+        if (session != null && service.verifySession(session)) {
             System.out.println("Verified");
             return true;
         }
@@ -105,12 +105,13 @@ public class Client {
 //            return false;
 //        }
 
-        if (service.signon(encryptData(user, sharedKey), encryptData(password, sharedKey))) {
+//        if (service.signon(encryptData(user, sharedKey), encryptData(password, sharedKey))) {
+        if (service.signon(user, password)) {
             System.out.println("Verifying sign in..");
             System.out.println("Receiving session info..");
 
-            decryptedSession = (Date) dateFormat.parse(decrypt(service.getSession(), sharedKey));
-            session = new Timestamp(decryptedSession.getTime());
+//            decryptedSession = (Date) dateFormat.parse(decrypt(service.getSession(), sharedKey));
+            session = service.getSession();
             System.out.println("new session: " + session.toString());
 
             System.out.println("Welcome to print service!");
@@ -261,62 +262,63 @@ public class Client {
     }
 
     private static String send(String choice, String arg1, String arg2) throws Exception {
-        byte[] encrypted = service.incoming(
-                encryptData(choice, sharedKey),
-                encryptData(arg1, sharedKey),
-                encryptData(arg2, sharedKey)
-        );
+//        byte[] encrypted = service.incoming(
+//                encryptData(choice, sharedKey),
+//                encryptData(arg1, sharedKey),
+//                encryptData(arg2, sharedKey)
+//        );
 
-        return decrypt(encrypted, sharedKey);
+//        return decrypt(encrypted, sharedKey);
+        return service.incoming(choice, arg1, arg2);
     }
 
     /**
      * modified from https://gist.github.com/bricef/2436364
      * same as from PrintServant but only with the relevant methods.
      */
-    protected static class AES {
-        /**
-         *
-         * @param data
-         * @param secretKey
-         * @return data encrypted
-         */
-        protected static byte[] encryptData(String data, SecretKey secretKey){
-            byte[] encrypted = null;
-            try {
-                encrypted = encrypt(data, secretKey);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return encrypted;
-        }
-
-        /**
-         *
-         * @param plain
-         * @param key
-         * @return data encrypted with key
-         * @throws Exception
-         */
-        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.ENCRYPT_MODE, key);
-            return cipher.doFinal(plain.getBytes("UTF-8"));
-        }
-
-        /**
-         *
-         * @param cipherText
-         * @param key
-         * @return decrypted bytes of cipher text
-         * @throws Exception
-         */
-        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
-            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
-            cipher.init(Cipher.DECRYPT_MODE, key);
-            return new String(cipher.doFinal(cipherText),"UTF-8");
-        }
-    }
+//    protected static class AES {
+//        /**
+//         *
+//         * @param data
+//         * @param secretKey
+//         * @return data encrypted
+//         */
+//        protected static byte[] encryptData(String data, SecretKey secretKey){
+//            byte[] encrypted = null;
+//            try {
+//                encrypted = encrypt(data, secretKey);
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//            return encrypted;
+//        }
+//
+//        /**
+//         *
+//         * @param plain
+//         * @param key
+//         * @return data encrypted with key
+//         * @throws Exception
+//         */
+//        protected static byte[] encrypt(String plain, SecretKey key) throws Exception {
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.ENCRYPT_MODE, key);
+//            return cipher.doFinal(plain.getBytes("UTF-8"));
+//        }
+//
+//        /**
+//         *
+//         * @param cipherText
+//         * @param key
+//         * @return decrypted bytes of cipher text
+//         * @throws Exception
+//         */
+//        protected static String decrypt(byte[] cipherText, SecretKey key) throws Exception{
+//            Cipher cipher = Cipher.getInstance("AES", "SunJCE");
+//            cipher.init(Cipher.DECRYPT_MODE, key);
+//            return new String(cipher.doFinal(cipherText),"UTF-8");
+//        }
+//    }
 
 //    /**
 //     * modified from http://stackoverflow.com/questions/3441501/java-asymmetric-encryption-preferred-way-to-store-public-private-keys
