@@ -1,14 +1,16 @@
 package dk.dtu.ds;
 
+import org.yaml.snakeyaml.Yaml;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.NoSuchAlgorithmException;
-import java.security.NoSuchProviderException;
-import java.security.spec.InvalidKeySpecException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 
 import static dk.dtu.ds.AES.encryptPassword;
@@ -20,11 +22,42 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     private String response;
 
     /**
+     * Roles
+     */
+    private static HashMap<String, List<String>> roles;
+
+    /**
+     * List of queued items
+     */
+    private static List<QueuePair> printQueue = new ArrayList<QueuePair>() {{
+        add(new QueuePair(1, "authenticationlab.txt"));
+        add(new QueuePair(2, "securitylab.txt"));
+        add(new QueuePair(3, "accesscontrol.data"));
+        add(new QueuePair(4, "rolebasedaccesscontrol.data"));
+        add(new QueuePair(5, "dtu.txt"));
+    }
+    };
+
+    /**
+     * List of known users
+     */
+    private static List<User> users = new ArrayList<User>() {{
+        add(new User("Bob", "0000", "technician"));
+        add(new User("Alice", "1234", "manager"));
+        add(new User("Cecilia", "2345", "powerUser"));
+        add(new User("David", "3456", "user"));
+        add(new User("Erica", "4567", "user"));
+        add(new User("Fred", "5678", "user"));
+        add(new User("George", "6789", "user"));
+    }};
+
+    /**
      *
      * @throws RemoteException
      */
-    protected PrintServant() throws IOException, NoSuchAlgorithmException, InvalidKeySpecException, NoSuchProviderException {
+    protected PrintServant() throws Exception {
         super();
+        readFile(new File("acl.data")); // new File("rbac.data")
     }
 
 
@@ -38,27 +71,17 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     /**
-     *
-     * @return list of users
+     * Read a YAML file
+     * @param file YAML file
+     * @throws IOException If unable to read file
      */
-    public static List<User> getUsers() {
-        return users;
+    @SuppressWarnings("unchecked")
+    private static void readFile(File file) throws IOException {
+        Yaml yaml = new Yaml();
+        FileInputStream fis = new FileInputStream(file);
+        roles = (HashMap<String, List<String>>) yaml.load(fis);
+        fis.close();
     }
-
-    /**
-     * list of queued items
-     */
-    private static List<QueuePair> printQueue = new ArrayList<QueuePair>() {{
-          add(new QueuePair(1, "authenticationlab.txt"));
-          add(new QueuePair(2, "securitylab.txt"));
-        }
-    };
-    /**
-     * list of known users
-     */
-    private static List<User> users = new ArrayList<User>() {{
-        add(new User("obeid", "1234"));
-    }};
 
     /**
      *
@@ -67,11 +90,9 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * @return whether or not sign on was successful
      */
     public boolean signon(String username, String password) throws Exception {
-        List<User> users = getUsers();
         User user = null;
-
         for (User u : users)
-            if (u.getUsername().equalsIgnoreCase(username)) user = u;
+            if (u.getUsername().equals(username)) user = u;
 
         return user != null && verify(password, user.getSalt(), user.getEncryptedPassword());
     }
@@ -114,18 +135,30 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     @Override
-    public String incoming(String choiceByte, String arg1, String arg2) throws Exception {
+    public String incoming(String choiceByte, String arg1, String arg2, String userName) throws Exception {
         if (choiceByte != null) choiceStr = choiceByte;
         if (arg1 != null) arg1Str = arg1;
         if (arg2 != null) arg2Str = arg2;
 
+        User user = null;
+        for (User u : users) {
+            if (u.getUsername().equals(userName)) user = u;
+            break;
+        }
+
         int choiceInt = Integer.parseInt(choiceStr);
         switch (choiceInt) {
             case 1:
+                if (!roles.get("print").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("print")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 if (arg1Str != null && arg2Str!= null) response = (print(arg1Str, arg2Str));
                 else throw new Exception("arguments cannot be null");
                 break;
             case 2:
+                if (!roles.get("queue").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("queue")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 response = null;
                 for (String q : queue()) {
                     if (response == null ) response = "";
@@ -134,26 +167,47 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
                 break;
             case 3:
+                if (!roles.get("topQueue").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("topQueue")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 if (arg1Str != null) response = topQueue(Integer.parseInt(arg1Str));
                 else throw new Exception("arguments cannot be null");
                 break;
             case 4:
+                if (!roles.get("start").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("start")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 response = start();
                 break;
             case 5:
+                if (!roles.get("stop").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("stop")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 response = stop();
                 break;
             case 6:
+                if (!roles.get("restart").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("restart")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 response = restart();
                 break;
             case 7:
+                if (!roles.get("status").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("status")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 response = status();
                 break;
             case 8:
+                if (!roles.get("readConfig").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("readConfig")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 if (arg1Str != null) response = readConfig(arg1Str);
                 else throw new Exception("arguments cannot be null");
                 break;
             case 9:
+                if (!roles.get("setConfig").contains(userName)) return "You are not authorized to perform the action.."; // ACL roles
+                //if (!roles.get(user.getRole()).contains("setConfig")) return "You are not authorized to perform the action.."; // RBAC roles
+
                 if (arg1Str != null && arg2Str!= null) response = (setConfig(arg1Str, arg2Str));
                 else throw new Exception("arguments cannot be null");
                 break;

@@ -6,7 +6,8 @@ import java.util.Random;
 import static dk.dtu.ds.AES.encryptPassword;
 
 public class User {
-    private String username = null;
+    private String username = null,
+            role = null;
     private byte[] encryptedPassword = null,
             salt = new byte[16];
 
@@ -15,10 +16,11 @@ public class User {
      * @param u
      * @param p
      */
-    public User(String u, String p){
+    public User(String u, String p, String r){
         salt = initialisationVector();
         encryptedPassword = encryptPassword(p, salt);
         username = u;
+        role = r;
     }
 
     /**
@@ -35,7 +37,7 @@ public class User {
 
     /**
      *
-     * @return
+     * @return Encrypted password
      */
     public byte[] getEncryptedPassword() {
         return encryptedPassword;
@@ -43,7 +45,7 @@ public class User {
 
     /**
      *
-     * @return
+     * @return Username
      */
     public String getUsername() {
         return username;
@@ -51,7 +53,13 @@ public class User {
 
     /**
      *
-     * @return
+     * @return Role
+     */
+    public String getRole() { return role; }
+
+    /**
+     *
+     * @return Salt
      */
     public byte[] getSalt() {
         return salt;

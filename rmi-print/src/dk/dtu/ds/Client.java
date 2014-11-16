@@ -7,24 +7,18 @@ import java.util.Scanner;
 public class Client {
     private static PrintService service;
     private static Timestamp session;
+    private static String user;
 
     public static void main(String[] args) throws Exception {
-
-
-        /*    user  | password
-         * ----------------------
-         *    obeid |  1234
-         */
-
         Scanner input = new Scanner(System.in);
         boolean authenticated = false,
                 terminate = false;
-        String user = null, password = null;
+        String password = null;
         service = (PrintService) Naming.lookup("rmi://localhost:8090/print");
 
         while (!terminate){
             authenticated = false;
-            while (!authenticated) authenticated = giveAccessInfo(input, user, password);
+            while (!authenticated) authenticated = giveAccessInfo(input, password);
             terminate = whatToChose(input);
         }
     }
@@ -32,12 +26,11 @@ public class Client {
     /**
      *
      * @param input
-     * @param user
      * @param password
      * @return whether or not the user can continue to the services
-     * @throws InterruptedException
+     * @throws Exception
      */
-    private static boolean giveAccessInfo(Scanner input, String user, String password) throws Exception {
+    private static boolean giveAccessInfo(Scanner input, String password) throws Exception {
         if (session != null) System.out.println("Verifying session..");
         if (session != null && service.verifySession(session)) {
             System.out.println("Verified");
@@ -144,7 +137,10 @@ public class Client {
                 System.out.println("Unknown command..");
                 break;
         }
+
         Thread.sleep(1000);
+        System.out.println("Press enter to continue");
+        input.nextLine();
         return false;
     }
 
@@ -157,7 +153,7 @@ public class Client {
     }
 
     private static String send(String choice, String arg1, String arg2) throws Exception {
-        return service.incoming(choice, arg1, arg2);
+        return service.incoming(choice, arg1, arg2, user);
     }
 
 }
