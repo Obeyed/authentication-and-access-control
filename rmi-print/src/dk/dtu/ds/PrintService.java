@@ -1,11 +1,8 @@
-package dk.obeid;
+package dk.dtu.ds;
 
-import javax.crypto.SecretKey;
 import java.io.IOException;
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 import java.sql.Timestamp;
-import java.util.List;
 
 public interface PrintService extends Remote {
 //    // prints file filename on the specified printer
