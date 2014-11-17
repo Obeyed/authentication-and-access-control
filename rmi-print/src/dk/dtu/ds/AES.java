@@ -39,7 +39,6 @@ public class AES {
      * @throws Exception
      */
     protected static byte[] encrypt(String plain, String key, byte[] salt) throws Exception {
-        System.out.println("Encrypting password..");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding", "SunJCE");
         cipher.init(Cipher.ENCRYPT_MODE,
                 new SecretKeySpec(key.getBytes("UTF-8"), "AES"),
