@@ -102,6 +102,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         FileInputStream fis = new FileInputStream(file);
         roles = (HashMap<String, List<String>>) yaml.load(fis);
         fis.close();
+        System.out.println(roles);
     }
 
     /**
@@ -161,10 +162,15 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         if (arg1 != null) arg1Str = arg1;
         if (arg2 != null) arg2Str = arg2;
 
+        System.out.println("Incoming..");
+
         User user = null;
         for (User u : users) {
-            if (u.getUsername().equals(userName)) user = u;
-            break;
+            if (u.getUsername().equals(userName)){
+                user = u;
+                break;
+            }
+
         }
 
         int choiceInt = Integer.parseInt(choiceStr);

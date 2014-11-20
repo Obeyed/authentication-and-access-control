@@ -14,7 +14,7 @@ public class Client {
         boolean authenticated = false,
                 terminate = false;
         String password = null;
-        service = (PrintService) Naming.lookup("rmi://localhost:8090/print");
+        service = (PrintService) Naming.lookup("rmi://localhost:8080/print");
 
         while (!terminate){
             authenticated = false;
