@@ -13,11 +13,12 @@ import java.util.*;
 import static dk.dtu.ds.AES.encryptPassword;
 
 public class PrintServant extends UnicastRemoteObject implements PrintService {
-    private String choiceStr;
-    private String arg1Str;
-    private String arg2Str;
     private String response;
     private boolean ACL = true;
+    private static String TECHNICIAN = "technician";
+    private static String MANAGER = "manager";
+    private static String POWERUSER = "powerUser";
+    private static String USER = "user";
 
     /**
      * Roles
@@ -40,13 +41,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * List of known users
      */
     private static List<User> users = new ArrayList<User>() {{
-        add(new User("Bob", "0000", "technician"));
-        add(new User("Alice", "1234", "manager"));
-        add(new User("Cecilia", "2345", "powerUser"));
-        add(new User("David", "3456", "user"));
-        add(new User("Erica", "4567", "user"));
-        add(new User("Fred", "5678", "user"));
-        add(new User("George", "6789", "user"));
+        add(new User("Bob", "0000", new String[]{TECHNICIAN}));
+        add(new User("Alice", "1234", new String[]{MANAGER}));
+        add(new User("Cecilia", "2345", new String[]{POWERUSER}));
+        add(new User("David", "3456", new String[]{USER}));
+        add(new User("Erica", "4567", new String[]{USER}));
+        add(new User("Fred", "5678", new String[]{USER}));
+        add(new User("George", "6789", new String[]{USER, TECHNICIAN}));
     }};
 
     /**
@@ -78,8 +79,9 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 System.out.println("Unknown access policy..\nEnter either 'ACL' or 'RBAC'");
             }
         }
+
         System.out.println("Server running.. Run the client.");
-    }
+   }
 
 
     /**
@@ -102,7 +104,6 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         FileInputStream fis = new FileInputStream(file);
         roles = (HashMap<String, List<String>>) yaml.load(fis);
         fis.close();
-        System.out.println(roles);
     }
 
     /**
@@ -157,127 +158,127 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     @Override
-    public String incoming(String choiceByte, String arg1, String arg2, String userName) throws Exception {
-        if (choiceByte != null) choiceStr = choiceByte;
-        if (arg1 != null) arg1Str = arg1;
-        if (arg2 != null) arg2Str = arg2;
-
-        System.out.println("Incoming..");
+    public String incoming(String choiceStr, String arg1Str, String arg2Str, String userName) throws Exception {
+        boolean allowed = false;
 
         User user = null;
         for (User u : users) {
             if (u.getUsername().equals(userName)){
+                for(int i = 0; i < u.getRole().length; i++)
+                    System.out.println(u.getRole()[i]);
                 user = u;
                 break;
             }
-
         }
 
         int choiceInt = Integer.parseInt(choiceStr);
         switch (choiceInt) {
             case 1:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("print").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("print"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "print");
                 }
 
-                if (arg1Str != null && arg2Str!= null) response = (print(arg1Str, arg2Str));
-                else response = "Arguments cannot be null..";
+                if (allowed) {
+                    if (arg1Str != null && arg2Str != null)
+                        response = (print(arg1Str, arg2Str));
+                    else
+                        response = "Arguments cannot be null..";
+                }
                 break;
             case 2:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("queue").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("queue"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "queue");
                 }
 
-                response = null;
-                for (String q : queue()) {
-                    if (response == null ) response = "";
-                    else response += "\n";
-                    response += q;
+                if (allowed) {
+                    response = null;
+                    for (String q : queue()) {
+                        if (response == null) response = "";
+                        else response += "\n";
+                        response += q;
+                    }
                 }
                 break;
             case 3:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("topQueue").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("topQueue"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "topQueue");
                 }
 
-                if (arg1Str != null) response = topQueue(Integer.parseInt(arg1Str));
-                else response = "Arguments cannot be null..";
+                if (allowed) {
+                    if (arg1Str != null)
+                        response = topQueue(Integer.parseInt(arg1Str));
+                    else
+                        response = "Arguments cannot be null..";
+                }
                 break;
             case 4:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("start").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("start"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "start");
                 }
 
-                response = start();
+                if (allowed)
+                    response = start();
                 break;
             case 5:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("stop").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("stop"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "stop");
                 }
 
-                response = stop();
+                if (allowed)
+                    response = stop();
                 break;
             case 6:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("restart").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("restart"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "restart");
                 }
 
-                response = restart();
+                if (allowed)
+                    response = restart();
                 break;
             case 7:
-                if(ACL) {
+                if (ACL) {
                     if (!roles.get("status").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("status"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "status");
                 }
 
-                response = status();
+                if (allowed)
+                    response = status();
                 break;
             case 8:
-                if(ACL) {
+                System.out.println("inside switch");
+                if (ACL) {
                     if (!roles.get("readConfig").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
-                }
-                else {
-                    if (!roles.get(user.getRole()).contains("readConfig"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                } else {
+                    allowed = verifyRBAC(user.getRole(), "readConfig");
                 }
 
-                if (arg1Str != null) response = readConfig(arg1Str);
-                else response = "Arguments cannot be null..";
+                if (allowed){
+                    if (arg1Str != null)
+                        response = readConfig(arg1Str);
+                    else
+                        response = "Arguments cannot be null..";
+                }
                 break;
             case 9:
                 if(ACL) {
@@ -285,18 +286,30 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                         return "You are not authorized to perform the action.."; // ACL roles
                 }
                 else {
-                    if (!roles.get(user.getRole()).contains("setConfig"))
-                        return "You are not authorized to perform the action.."; // RBAC roles
+                    allowed = verifyRBAC(user.getRole(), "setConfig");
                 }
 
-                if (arg1Str != null && arg2Str!= null) response = (setConfig(arg1Str, arg2Str));
-                else response = "Arguments cannot be null..";
+                if (allowed){
+                    if (arg1Str != null && arg2Str!= null)
+                        response = (setConfig(arg1Str, arg2Str));
+                    else
+                        response = "Arguments cannot be null..";
+                }
                 break;
             default:
                 response = "Unknown command..";
                 break;
         }
         return response;
+    }
+
+    private static boolean verifyRBAC(String[] rs, String operation){
+        for (int i = 0; i < rs.length; i++) {
+            if (roles.get(rs[i]).contains(operation)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /*

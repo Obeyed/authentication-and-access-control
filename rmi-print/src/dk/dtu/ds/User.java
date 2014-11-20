@@ -1,13 +1,14 @@
 package dk.dtu.ds;
 
 import java.security.SecureRandom;
+import java.util.Arrays;
 import java.util.Random;
 
 import static dk.dtu.ds.AES.encryptPassword;
 
 public class User {
-    private String username = null,
-            role = null;
+    private String username = null;
+    private String[] role = null;
     private byte[] encryptedPassword = null,
             salt = new byte[16];
 
@@ -16,11 +17,11 @@ public class User {
      * @param u
      * @param p
      */
-    public User(String u, String p, String r){
+    public User(String u, String p, String[] r){
         salt = initialisationVector();
         encryptedPassword = encryptPassword(p, salt);
         username = u;
-        role = r;
+        role = Arrays.copyOf(r, r.length);
     }
 
     /**
@@ -55,7 +56,7 @@ public class User {
      *
      * @return Role
      */
-    public String getRole() { return role; }
+    public String[] getRole() { return role; }
 
     /**
      *
