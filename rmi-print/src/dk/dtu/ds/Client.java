@@ -11,8 +11,7 @@ public class Client {
 
     public static void main(String[] args) throws Exception {
         Scanner input = new Scanner(System.in);
-        boolean authenticated = false,
-                terminate = false;
+        boolean authenticated, terminate = false;
         String password = null;
         service = (PrintService) Naming.lookup("rmi://localhost:8080/print");
 
@@ -24,19 +23,21 @@ public class Client {
     }
 
     /**
-     *
-     * @param input
-     * @param password
+     * Get access info from user
+     * @param input Scanner for input from user
+     * @param password the password of the user
      * @return whether or not the user can continue to the services
-     * @throws Exception
+     * @throws Exception if something goes wrong
      */
     private static boolean giveAccessInfo(Scanner input, String password) throws Exception {
-        if (session != null) System.out.println("Verifying session..");
+        if (session != null)
+            System.out.println("Verifying session..");
         if (session != null && service.verifySession(session)) {
             System.out.println("Verified");
             return true;
         }
-        if(session != null) System.out.println("Session expired! Sign in again.");
+        if(session != null)
+            System.out.println("Session expired! Sign in again.");
 
         System.out.print("Enter username: ");
         user = input.nextLine();
@@ -63,10 +64,10 @@ public class Client {
     }
 
     /**
-     * actions are encrypted before sent to the server
-     * @param input
+     * Choose an action
+     * @param input Scanner for input from user
      * @return whether or not to terminate
-     * @throws Exception
+     * @throws Exception if something goes wrong
      */
     private static boolean whatToChose(Scanner input) throws Exception {
         String choiceStr = null,
@@ -144,14 +145,35 @@ public class Client {
         return false;
     }
 
+    /**
+     * Send request to server
+     * @param choice Choice for switch
+     * @return Response
+     * @throws Exception if something goes wrong
+     */
     private static String send(String choice) throws Exception {
         return send(choice, null);
     }
 
+    /**
+     * Send request to server
+     * @param choice Choice for switch
+     * @param arg1 First argument for operation, if needed.
+     * @return Response
+     * @throws Exception if something goes wrong
+     */
     private static String send(String choice, String arg1) throws Exception {
         return send(choice, arg1, null);
     }
 
+    /**
+     * Send request to server
+     * @param choice Choice for switch
+     * @param arg1 First argument for operation, if needed.
+     * @param arg2 Second argument for operation, if needed.
+     * @return Response
+     * @throws Exception if something goes wrong
+     */
     private static String send(String choice, String arg1, String arg2) throws Exception {
         return service.incoming(choice, arg1, arg2, user);
     }

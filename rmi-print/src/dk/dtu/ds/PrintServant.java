@@ -19,6 +19,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     private static String MANAGER = "manager";
     private static String POWERUSER = "powerUser";
     private static String USER = "user";
+    private static int SESSION_TIME = 30;
 
     /**
      * Roles
@@ -38,21 +39,38 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     };
 
     /**
+     * Class for list of queued items
+     */
+    protected static class QueuePair {
+        private int jobNumber;
+        private String fileName;
+
+        private QueuePair() {}
+
+        private QueuePair(int j, String f) {
+            jobNumber = j;
+            fileName = f;
+        }
+    }
+
+    /**
      * List of known users
      */
     private static List<User> users = new ArrayList<User>() {{
-        add(new User("Bob", "0000", new String[]{TECHNICIAN}));
-        add(new User("Alice", "1234", new String[]{MANAGER}));
+   //     add(new User("Bob", "0000", new String[]{TECHNICIAN}));
+        add(new User("Alice",   "1234", new String[]{MANAGER}));
         add(new User("Cecilia", "2345", new String[]{POWERUSER}));
-        add(new User("David", "3456", new String[]{USER}));
-        add(new User("Erica", "4567", new String[]{USER}));
-        add(new User("Fred", "5678", new String[]{USER}));
-        add(new User("George", "6789", new String[]{USER, TECHNICIAN}));
+        add(new User("David",   "3456", new String[]{USER}));
+        add(new User("Erica",   "4567", new String[]{USER}));
+        add(new User("Fred",    "5678", new String[]{USER}));
+        add(new User("George",  "6789", new String[]{USER, TECHNICIAN}));
+        add(new User("Henry",   "7890", new String[]{USER}));
+        add(new User("Ida",     "8901", new String[]{POWERUSER}));
     }};
 
     /**
-     *
-     * @throws RemoteException
+     * Constructor
+     * @throws Exception
      */
     protected PrintServant() throws Exception {
         super();
@@ -67,13 +85,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 System.out.println("Access Control List specified..\nReading ACL file..");
                 ACL = true;
                 policy = 1;
-                readFile(new File("acl.data"));
+                readFile(new File("acl.yml"));
             }
             else if (accessPolicy.equalsIgnoreCase("RBAC")) {
                 System.out.println("Role Based Access Control specified..\nReading RBAC file..");
                 ACL = false;
                 policy = 1;
-                readFile(new File("rbac.data"));
+                readFile(new File("rbac.yml"));
             }
             else {
                 System.out.println("Unknown access policy..\nEnter either 'ACL' or 'RBAC'");
@@ -85,7 +103,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
 
 
     /**
-     *
+     * Return timestamp
      * @return fresh timestamp for session
      */
     @Override
@@ -108,8 +126,8 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
 
     /**
      *
-     * @param username
-     * @param password
+     * @param username user name
+     * @param password password
      * @return whether or not sign on was successful
      */
     public boolean signon(String username, String password) throws Exception {
@@ -121,11 +139,11 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     /**
-     *
-     * @param p
-     * @param s
-     * @param ep
-     * @return
+     * Verifies a given password
+     * @param p password
+     * @param s salt
+     * @param ep encrypted password
+     * @return true if is equal
      */
     private static boolean verify(String p, byte[] s, byte[] ep){
         byte[] nep = encryptPassword(p, s);
@@ -139,15 +157,15 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     /**
-     *
-     * @param session
+     * verifies a timestamp
+     * @param session The timestamp
      * @return whether or not session is still valid
      */
     public boolean verifySession(Timestamp session) throws Exception {
         if (session != null){
             Calendar cal = Calendar.getInstance();
             cal.setTimeInMillis(session.getTime());
-            cal.add(Calendar.SECOND, 10); // has access for 10 seconds
+            cal.add(Calendar.SECOND, SESSION_TIME);
             Timestamp userSession = new Timestamp(cal.getTime().getTime());
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
 
@@ -157,6 +175,15 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         return false;
     }
 
+    /**
+     * Incoming requests from client
+     * @param choiceStr Choice for the switch
+     * @param arg1Str First arguemnt, if operation needs it
+     * @param arg2Str Second argument, if operations needs it
+     * @param userName User name of user logged into client
+     * @return response
+     * @throws Exception if something goes wrong
+     */
     @Override
     public String incoming(String choiceStr, String arg1Str, String arg2Str, String userName) throws Exception {
         boolean allowed = false;
@@ -177,6 +204,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("print").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "print");
                 }
@@ -192,6 +220,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("queue").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "queue");
                 }
@@ -209,6 +238,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("topQueue").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "topQueue");
                 }
@@ -224,6 +254,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("start").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "start");
                 }
@@ -235,6 +266,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("stop").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "stop");
                 }
@@ -246,6 +278,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("restart").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "restart");
                 }
@@ -257,6 +290,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("status").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "status");
                 }
@@ -269,6 +303,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if (ACL) {
                     if (!roles.get("readConfig").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 } else {
                     allowed = verifyRBAC(user.getRole(), "readConfig");
                 }
@@ -284,6 +319,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 if(ACL) {
                     if (!roles.get("setConfig").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
+                    allowed = true;
                 }
                 else {
                     allowed = verifyRBAC(user.getRole(), "setConfig");
@@ -303,6 +339,12 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         return response;
     }
 
+    /**
+     * Verifies access persmissions according to RBAC
+     * @param rs Array of roles
+     * @param operation The operation
+     * @return true if is allowed
+     */
     private static boolean verifyRBAC(String[] rs, String operation){
         for (int i = 0; i < rs.length; i++) {
             if (roles.get(rs[i]).contains(operation)) {
@@ -316,12 +358,12 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * AVAILABLE SERVICES
      */
     // prints file filename on the specified printer
-    public String print(String filename, String printer) throws RemoteException {
+    private String print(String filename, String printer) throws RemoteException {
         return "Printing " + filename + " on printer " + printer;
     }
 
     // lists the print printQueue on the user's display in lines of the form <job number>   <file name>
-    public List<String> queue() throws RemoteException {
+    private List<String> queue() throws RemoteException {
         List<String> printList = new ArrayList<String>();
 
         for (QueuePair q : printQueue)
@@ -331,7 +373,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     // moves job to the top of the printQueue
-    public String topQueue(int job) throws RemoteException {
+    private String topQueue(int job) throws RemoteException {
         QueuePair qp = null;
         int index = -1;
         for (QueuePair q : printQueue){
@@ -349,17 +391,17 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     // starts the print server
-    public String start() throws RemoteException {
+    private String start() throws RemoteException {
         return "Print server booted";
     }
 
     // stops the print server
-    public String stop() throws RemoteException {
+    private String stop() throws RemoteException {
         return "Print server stopped";
     }
 
     // stops the print server, clears the print printQueue and starts the print server again
-    public String restart() throws RemoteException {
+    private String restart() throws RemoteException {
         System.out.println(stop());
         printQueue = null;
         System.out.println(start());
@@ -367,33 +409,18 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     // prints status of printer on the user's display
-    public String status() throws RemoteException {
+    private String status() throws RemoteException {
         return "Status unknown";
     }
 
     // prints the value of the parameter on the user's display
-    public String readConfig(String parameter) throws RemoteException {
+    private String readConfig(String parameter) throws RemoteException {
         return "Configuration: " + parameter;
     }
 
     // sets the parameter to value
-    public String setConfig(String parameter, String value) throws RemoteException {
+    private String setConfig(String parameter, String value) throws RemoteException {
         return String.format("Written configuration: %s", parameter = value); // whaa?
-    }
-
-    /**
-     * Class for list of queued items
-     */
-    protected static class QueuePair {
-        private int jobNumber;
-        private String fileName;
-
-        private QueuePair() {}
-
-        private QueuePair(int j, String f) {
-            jobNumber = j;
-            fileName = f;
-        }
     }
 
 }
