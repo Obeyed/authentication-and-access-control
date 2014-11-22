@@ -11,5 +11,5 @@ public interface PrintService extends Remote {
 
     public boolean verifySession(Timestamp session) throws Exception;
 
-    public boolean signon(String user, String password) throws Exception;
+    public boolean signOn(String user, String password) throws Exception;
 }

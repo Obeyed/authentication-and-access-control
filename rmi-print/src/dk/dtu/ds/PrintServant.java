@@ -130,10 +130,11 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
      * @param password password
      * @return whether or not sign on was successful
      */
-    public boolean signon(String username, String password) throws Exception {
+    public boolean signOn(String username, String password) throws Exception {
         User user = null;
         for (User u : users)
-            if (u.getUsername().equals(username)) user = u;
+            if (u.getUsername().equals(username))
+                user = u;
 
         return user != null && verify(password, user.getSalt(), user.getEncryptedPassword());
     }
@@ -150,8 +151,10 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
 
         if (nep.length != ep.length)
             return false;
+
         for (int i = 0; i < ep.length; i++)
-            if (nep[i] != ep[i]) return false;
+            if (nep[i] != ep[i])
+                return false;
 
         return true;
     }
@@ -178,7 +181,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     /**
      * Incoming requests from client
      * @param choiceStr Choice for the switch
-     * @param arg1Str First arguemnt, if operation needs it
+     * @param arg1Str First argument, if operation needs it
      * @param arg2Str Second argument, if operations needs it
      * @param userName User name of user logged into client
      * @return response
@@ -191,14 +194,16 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
         User user = null;
         for (User u : users) {
             if (u.getUsername().equals(userName)){
-                for(int i = 0; i < u.getRole().length; i++)
-                    System.out.println(u.getRole()[i]);
                 user = u;
                 break;
             }
         }
 
         int choiceInt = Integer.parseInt(choiceStr);
+
+        if(choiceInt < 10 && choiceInt > 0)
+            System.out.print("Checking privileges: ");
+
         switch (choiceInt) {
             case 1:
                 if (ACL) {
@@ -210,11 +215,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
 
                 if (allowed) {
+                    System.out.println("Access granted..");
                     if (arg1Str != null && arg2Str != null)
                         response = (print(arg1Str, arg2Str));
                     else
                         response = "Arguments cannot be null..";
                 }
+                else System.out.println("Access denied..");
                 break;
             case 2:
                 if (ACL) {
@@ -226,6 +233,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
 
                 if (allowed) {
+                    System.out.println("Access granted..");
                     response = null;
                     for (String q : queue()) {
                         if (response == null) response = "";
@@ -233,6 +241,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                         response += q;
                     }
                 }
+                else System.out.println("Access denied..");
                 break;
             case 3:
                 if (ACL) {
@@ -244,11 +253,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
 
                 if (allowed) {
+                    System.out.println("Access granted..");
                     if (arg1Str != null)
                         response = topQueue(Integer.parseInt(arg1Str));
                     else
                         response = "Arguments cannot be null..";
                 }
+                else System.out.println("Access denied..");
                 break;
             case 4:
                 if (ACL) {
@@ -259,8 +270,11 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                     allowed = verifyRBAC(user.getRole(), "start");
                 }
 
-                if (allowed)
+                if (allowed) {
+                    System.out.println("Access granted..");
                     response = start();
+                }
+                else System.out.println("Access denied..");
                 break;
             case 5:
                 if (ACL) {
@@ -271,8 +285,11 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                     allowed = verifyRBAC(user.getRole(), "stop");
                 }
 
-                if (allowed)
+                if (allowed) {
+                    System.out.println("Access granted..");
                     response = stop();
+                }
+                else System.out.println("Access denied..");
                 break;
             case 6:
                 if (ACL) {
@@ -283,8 +300,11 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                     allowed = verifyRBAC(user.getRole(), "restart");
                 }
 
-                if (allowed)
+                if (allowed) {
+                    System.out.println("Access granted..");
                     response = restart();
+                }
+                else System.out.println("Access denied..");
                 break;
             case 7:
                 if (ACL) {
@@ -295,11 +315,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                     allowed = verifyRBAC(user.getRole(), "status");
                 }
 
-                if (allowed)
+                if (allowed) {
+                    System.out.println("Access granted..");
                     response = status();
+                }
+                else System.out.println("Access denied..");
                 break;
             case 8:
-                System.out.println("inside switch");
                 if (ACL) {
                     if (!roles.get("readConfig").contains(userName))
                         return "You are not authorized to perform the action.."; // ACL roles
@@ -309,11 +331,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
 
                 if (allowed){
+                    System.out.println("Access granted..");
                     if (arg1Str != null)
                         response = readConfig(arg1Str);
                     else
                         response = "Arguments cannot be null..";
                 }
+                else System.out.println("Access denied..");
                 break;
             case 9:
                 if(ACL) {
@@ -326,11 +350,13 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
                 }
 
                 if (allowed){
+                    System.out.println("Access granted..");
                     if (arg1Str != null && arg2Str!= null)
                         response = (setConfig(arg1Str, arg2Str));
                     else
                         response = "Arguments cannot be null..";
                 }
+                else System.out.println("Access denied..");
                 break;
             default:
                 response = "Unknown command..";
@@ -340,7 +366,7 @@ public class PrintServant extends UnicastRemoteObject implements PrintService {
     }
 
     /**
-     * Verifies access persmissions according to RBAC
+     * Verifies access permissions according to RBAC
      * @param rs Array of roles
      * @param operation The operation
      * @return true if is allowed

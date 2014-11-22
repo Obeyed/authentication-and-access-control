@@ -9,6 +9,11 @@ public class Client {
     private static Timestamp session;
     private static String user;
 
+    /**
+     * This main is run second. And the server/client is running.
+     * @param args Arguments
+     * @throws Exception if something goes wrong
+     */
     public static void main(String[] args) throws Exception {
         Scanner input = new Scanner(System.in);
         boolean authenticated, terminate = false;
@@ -23,7 +28,7 @@ public class Client {
     }
 
     /**
-     * Get access info from user
+     * Get access from user.
      * @param input Scanner for input from user
      * @param password the password of the user
      * @return whether or not the user can continue to the services
@@ -46,7 +51,7 @@ public class Client {
         password = input.nextLine();
 
         // We assume that the connection is secure and private
-        if (service.signon(user, password)) {
+        if (service.signOn(user, password)) {
             System.out.println("Verifying sign in..");
             System.out.println("Receiving session info..");
 
@@ -64,7 +69,7 @@ public class Client {
     }
 
     /**
-     * Choose an action
+     * Choose an action.
      * @param input Scanner for input from user
      * @return whether or not to terminate
      * @throws Exception if something goes wrong
@@ -146,7 +151,7 @@ public class Client {
     }
 
     /**
-     * Send request to server
+     * Send request to server.
      * @param choice Choice for switch
      * @return Response
      * @throws Exception if something goes wrong
