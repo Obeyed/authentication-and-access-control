@@ -1,25 +1,25 @@
 manager:
-- print
-- queue
-- topQueue
-- start
-- stop
-- restart
-- status
-- readConfig
-- setConfig
+  - print
+  - queue
+  - topQueue
+  - start
+  - stop
+  - restart
+  - status
+  - readConfig
+  - setConfig
 technician:
-- start
-- stop
-- restart
-- status
-- readConfig
-- setConfig
+  - start
+  - stop
+  - restart
+  - status
+  - readConfig
+  - setConfig
 powerUser:
-- print
-- queue
-- topQueue
-- restart
+  - print
+  - queue
+  - topQueue
+  - restart
 user:
-- print
-- queue
+  - print
+  - queue

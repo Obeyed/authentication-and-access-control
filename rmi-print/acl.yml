@@ -1,36 +1,48 @@
 print:
-- Alice
-- Cecilia
-- David
-- Erica
-- Fred
-- George
+  - Alice
+  - Cecilia
+  - David
+  - Erica
+  - Fred
+  - George
+  - Henry
+  - Ida
 queue:
-- Alice
-- Cecilia
-- David
-- Erica
-- Fred
-- George
+  - Alice
+  - Cecilia
+  - David
+  - Erica
+  - Fred
+  - George
+  - Henry
+  - Ida
 topQueue:
-- Alice
-- Cecilia
+  - Alice
+  - Cecilia
+  - George
+  - Ida
 start:
-- Alice
-- Bob
+  - Alice
+  #- Bob
+  - George
 stop:
-- Alice
-- Bob
+  - Alice
+  #- Bob
+  - George
 restart:
-- Alice
-- Bob
-- Cecilia
+  - Alice
+  #- Bob
+  - Cecilia
+  - Ida
 status:
-- Alice
-- Bob
+  - Alice
+  #- Bob
+  - George
 readConfig:
-- Alice
-- Bob
+  - Alice
+  #- Bob
+  - George
 setConfig:
-- Alice
-- Bob
+  - Alice
+  #- Bob
+  - George
